@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Administration</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:," />
+</head>
+<body data-title="Administration">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" data-brand-mark>B</div>
+      <span class="brand-name" data-brand>Bank</span>
+      <span class="badge neutral">Admin</span>
+    </div>
+    <div class="topbar-right">
+      <span class="user-name" id="adminName"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn" type="button">Sign out</button>
+    </div>
+  </header>
+
+  <main class="container wide">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="customers" aria-selected="true" type="button">Customers</button>
+      <button class="tab" role="tab" data-tab="messages" aria-selected="false" type="button">Error messages</button>
+      <button class="tab" role="tab" data-tab="limits" aria-selected="false" type="button">Limits</button>
+      <button class="tab" role="tab" data-tab="audit" aria-selected="false" type="button">Audit log</button>
+    </div>
+
+    <!-- Customers -->
+    <section data-panel="customers" class="grid-gap">
+      <div class="card">
+        <div class="section-header"><h2>New customer</h2></div>
+        <form id="createForm" class="form" novalidate>
+          <div class="row">
+            <div class="field">
+              <label for="newName">Full name</label>
+              <input type="text" id="newName" maxlength="80" required />
+            </div>
+            <div class="field">
+              <label for="newPassword">Password <span class="muted">(optional)</span></label>
+              <input type="text" id="newPassword" autocomplete="off" placeholder="Leave empty to generate" />
+            </div>
+          </div>
+          <div id="createError" class="alert error" role="alert" hidden></div>
+          <div><button class="btn" type="submit">Create customer</button></div>
+        </form>
+        <div id="createdBox" hidden></div>
+      </div>
+
+      <div class="card">
+        <div class="section-header"><h2>Customers</h2></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Account</th><th>Name</th><th>Status</th><th class="num">Balance</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="usersBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Error messages -->
+    <section data-panel="messages" hidden>
+      <div class="card">
+        <div class="section-header"><h2>Transfer error messages</h2></div>
+        <p class="page-sub">Each message is shown to the customer when the matching check fails. Placeholders are filled in automatically.</p>
+        <div id="messagesList"></div>
+      </div>
+    </section>
+
+    <!-- Limits -->
+    <section data-panel="limits" hidden>
+      <div class="card">
+        <div class="section-header"><h2>Transfer limits</h2></div>
+        <form id="limitsForm" class="form" novalidate>
+          <div class="row">
+            <div class="field">
+              <label for="singleLimit">Per transfer (EUR)</label>
+              <input type="text" id="singleLimit" inputmode="decimal" required />
+            </div>
+            <div class="field">
+              <label for="dailyLimit">Per rolling 24 hours (EUR)</label>
+              <input type="text" id="dailyLimit" inputmode="decimal" required />
+            </div>
+          </div>
+          <div id="limitsError" class="alert error" role="alert" hidden></div>
+          <div><button class="btn" type="submit">Save limits</button></div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Audit -->
+    <section data-panel="audit" hidden>
+      <div class="card">
+        <div class="section-header"><h2>Audit log</h2><button class="btn btn-secondary btn-sm" id="auditRefresh" type="button">Refresh</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Time</th><th>Who</th><th>Action</th><th>Target</th><th>Details</th></tr></thead>
+            <tbody id="auditBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="dlg">
+    <div class="dlg-body" id="dlgBody"></div>
+    <div class="dlg-foot" id="dlgFoot"></div>
+  </dialog>
+
+  <script src="js/config.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

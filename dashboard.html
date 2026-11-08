@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:," />
+</head>
+<body data-title="Dashboard">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" data-brand-mark>B</div>
+      <span class="brand-name" data-brand>Bank</span>
+    </div>
+    <div class="topbar-right">
+      <span class="user-name" id="topName"></span>
+      <span class="user-chip" id="userChip"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn" type="button">Sign out</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card owner-card">
+      <div>
+        <p class="label">Account holder</p>
+        <h1 class="owner-name" id="ownerName">&nbsp;</h1>
+        <p class="owner-account" id="ownerAccount"></p>
+      </div>
+      <div class="owner-avatar" id="avatar"></div>
+    </section>
+
+    <section class="card balance-card">
+      <p class="label">Balance</p>
+      <p class="balance-amount" id="balance">&nbsp;</p>
+      <div class="stats">
+        <div>
+          <p class="label">Received, 30 days</p>
+          <p class="value" id="received">&ndash;</p>
+        </div>
+        <div>
+          <p class="label">Sent, 30 days</p>
+          <p class="value" id="sent">&ndash;</p>
+        </div>
+        <div>
+          <p class="label">Daily limit left</p>
+          <p class="value" id="limitLeft">&ndash;</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="actions">
+      <a class="btn" href="transfer.html">New transfer</a>
+      <button class="btn btn-secondary" id="csvBtn" type="button">Download statement (CSV)</button>
+    </section>
+
+    <section class="card">
+      <div class="section-header">
+        <h2>Transactions</h2>
+        <button class="btn btn-secondary btn-sm" id="viewAll" type="button">View all</button>
+      </div>
+      <div id="txList" class="tx-list"></div>
+      <p id="txEmpty" class="empty" hidden>No transactions yet.</p>
+    </section>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

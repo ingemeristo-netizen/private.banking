@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Online Banking</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:," />
+</head>
+<body class="login-page" data-title="Sign in">
+  <div class="login-wrap">
+    <main class="card login-card">
+      <div class="brand-mark large" data-brand-mark>B</div>
+      <span class="brand-name" data-brand>Bank</span>
+      <p class="tagline">Sign in to your online banking</p>
+
+      <form id="loginForm" class="form" novalidate>
+        <div id="loginError" class="alert error" role="alert" hidden></div>
+
+        <div class="field">
+          <label for="account">Account number</label>
+          <input type="text" id="account" inputmode="numeric" autocomplete="username" placeholder="0000 0000 0000" required />
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" autocomplete="current-password" placeholder="Your password" required />
+        </div>
+
+        <button type="submit" id="loginBtn" class="btn btn-block">Sign in</button>
+      </form>
+
+      <p class="login-note">Test environment. Do not enter real credentials.</p>
+    </main>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

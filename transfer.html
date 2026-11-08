@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>New transfer</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:," />
+</head>
+<body data-title="New transfer">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" data-brand-mark>B</div>
+      <span class="brand-name" data-brand>Bank</span>
+    </div>
+    <a class="btn btn-secondary btn-sm" href="dashboard.html">&larr; Back</a>
+  </header>
+
+  <main class="container narrow">
+    <div>
+      <h1 class="page-title">New transfer</h1>
+      <p class="page-sub">Send money to another customer account.</p>
+    </div>
+
+    <form id="transferForm" class="card form" novalidate>
+      <div class="field">
+        <label for="recipient">Recipient account number</label>
+        <input type="text" id="recipient" inputmode="numeric" autocomplete="off" placeholder="0000 0000 0000" required />
+      </div>
+
+      <div class="field">
+        <label for="amount">Amount</label>
+        <div class="amount-wrap">
+          <span class="currency">&euro;</span>
+          <input type="text" id="amount" inputmode="decimal" autocomplete="off" placeholder="0.00" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="reference">Payment reference <span class="muted">(optional)</span></label>
+        <input type="text" id="reference" maxlength="140" autocomplete="off" placeholder="Rent, invoice 42, gift&hellip;" />
+      </div>
+
+      <p class="limits-note" id="limitsNote">&nbsp;</p>
+
+      <button type="submit" id="submitBtn" class="btn btn-block">Send money</button>
+    </form>
+  </main>
+
+  <dialog id="resultDialog" aria-labelledby="resultTitle">
+    <div class="dlg-body result-body">
+      <div class="result-icon" id="resultIcon" aria-hidden="true"></div>
+      <h2 id="resultTitle"></h2>
+      <p id="resultText"></p>
+    </div>
+    <div class="dlg-foot center">
+      <button type="button" class="btn btn-secondary" id="closeBtn">Close</button>
+      <a class="btn" href="dashboard.html">Back to dashboard</a>
+    </div>
+  </dialog>
+
+  <script src="js/api.js"></script>
+  <script src="js/transfer.js"></script>
+</body>
+</html>

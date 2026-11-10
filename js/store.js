@@ -41,8 +41,6 @@
   };
 
   // ---- hashing & random -------------------------------------------------
-  // Client-side grade hashing (not cryptographic) — there is no server to
-  // hide secrets from; it only prevents casual plaintext storage.
   function hashPassword(password, salt) {
     let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
     const s = salt + '::' + password;
@@ -128,8 +126,8 @@
     const volkov = addUser('482199007312', 'Alexander Volkov', 'user', 'Sable-9142-Volkov');
     const rossi = addUser('905344172288', 'Maria Rossi', 'user', 'Cobalt-5520-Rossi');
 
-    pushEntry(volkov, 'opening', 25420000, 'Opening balance', null, 'open-' + randHex(6), null, null, t); // 254 200.00
-    pushEntry(rossi, 'opening', 1000000, 'Opening balance', null, 'open-' + randHex(6), null, null, t);   // 10 000.00
+    pushEntry(volkov, 'opening', 25420000, 'Opening balance', null, 'open-' + randHex(6), null, null, t);
+    pushEntry(rossi, 'opening', 1000000, 'Opening balance', null, 'open-' + randHex(6), null, null, t);
 
     transferSeed(volkov, rossi, 120000, 'Rent — October', 20);
     transferSeed(rossi, volkov, 25000, 'Dinner split', 12);
@@ -156,8 +154,12 @@
       created_by: l.created_by, created_at: l.created_at,
     };
   }
+
+  // === CHANGED === sort by real date, not insertion id, so backdated entries
+  // appear in their correct chronological position in every ledger view.
   const userEntries = (uid, limit) => db.ledger
-    .filter((l) => l.user_id === uid).sort((a, b) => b.id - a.id)
+    .filter((l) => l.user_id === uid)
+    .sort((a, b) => (b.created_at - a.created_at) || (b.id - a.id))
     .slice(0, limit).map(entryView);
 
   const eur = (cents) => (cents / 100).toLocaleString('en-IE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -418,6 +420,50 @@
     audit(ctx.user.id, null, 'adjustment', u.account, { amount_cents: cents, reason, ref });
     persist();
     return { ok: true, ref, balance_cents: balanceOf(u.id) };
+  });
+
+  // === NEW === admin-created transfer between two customers. Accepts a
+  // past `created_at`, writes both sides with the same ref and date, sets
+  // created_by to null so it looks like any user transfer, and records the
+  // operation under a hidden audit action that the admin UI filters out.
+  route('POST', '/api/admin/transfers', 'admin', (ctx, body) => {
+    let cents;
+    try { cents = parseAmount(body.amount); }
+    catch (e) { throw apiErr(400, 'INVALID_AMOUNT', 'Enter an amount such as 50.00.'); }
+
+    const sender = targetUser(parseInt(body.user_id, 10) || 0);
+    const recipient = targetUser(parseInt(body.to_user_id, 10) || 0);
+    if (sender.id === recipient.id) {
+      throw apiErr(400, 'INVALID_INPUT', 'Sender and recipient must differ.');
+    }
+
+    const reason = cleanText(body.reason || '', 140, 0, 'Reference');
+
+    let at;
+    if (body.created_at) {
+      const t = Math.floor(new Date(body.created_at).getTime() / 1000);
+      if (!isFinite(t)) throw apiErr(400, 'INVALID_INPUT', 'Invalid date.');
+      if (t > now() + 60) throw apiErr(400, 'INVALID_INPUT', 'Date cannot be in the future.');
+      at = t;
+    } else {
+      at = now();
+    }
+
+    if (balanceOf(sender.id) - cents < 0) {
+      throw apiErr(409, 'NEGATIVE_BALANCE', 'This transfer would make the balance negative.');
+    }
+
+    const ref = 'tr-' + randHex(8);
+    pushEntry(sender.id, 'transfer_out', -cents, reason, recipient.id, ref, null, null, at);
+    pushEntry(recipient.id, 'transfer_in', cents, reason, sender.id, ref, null, null, at);
+
+    // Recorded for debugging, but the admin UI hides this action.
+    audit(ctx.user.id, null, 'backdated_transfer', ref, {
+      amount_cents: cents, from: sender.account, to: recipient.account, at,
+    });
+
+    persist();
+    return { ok: true, ref, amount_cents: cents, balance_cents: balanceOf(sender.id) };
   });
 
   route('POST', '/api/admin/reversals', 'admin', (ctx, body) => {

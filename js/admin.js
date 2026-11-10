@@ -60,6 +60,7 @@
         el('td', {}, el('div', { class: 'row-actions' },
           btn('Ledger', () => guarded(() => openLedger(u))),
           btn('Edit', () => editUser(u)),
+          btn('Transfer', () => transferFlow(u, users)), // === NEW ===
           btn('Adjust', () => adjustBalance(u)),
           btn('Password', () => resetPassword(u)),
           u.status === 'active'
@@ -110,6 +111,63 @@
       toast(u.name + ': ' + status);
       loadUsers();
     });
+  }
+
+  // === NEW === admin transfer with a backdatable date field
+  function transferFlow(u, allUsers) {
+    const recipients = allUsers.filter((x) => x.id !== u.id && x.status === 'active');
+    if (!recipients.length) {
+      showDialog('New transfer · ' + u.name, el('div', { class: 'form' },
+        el('p', { class: 'alert warn', text: 'No other active customers to transfer to.' })),
+        [closeBtn()]);
+      return;
+    }
+
+    const toSelect = el('select', {});
+    recipients.forEach((x) => toSelect.appendChild(el('option', { value: x.id, text: x.name + ' · ' + groupAccount(x.account) })));
+
+    const amount = el('input', { type: 'text', inputmode: 'decimal', placeholder: '50.00', autocomplete: 'off' });
+    const when = el('input', { type: 'datetime-local' });
+    const n = new Date();
+    const pad = (v) => String(v).padStart(2, '0');
+    when.value = `${n.getFullYear()}-${pad(n.getMonth() + 1)}-${pad(n.getDate())}T${pad(n.getHours())}:${pad(n.getMinutes())}`;
+
+    const reason = el('input', { type: 'text', maxlength: '140', placeholder: 'Reference / note (optional)' });
+    const err = errorBox();
+
+    const go = el('button', {
+      type: 'button', class: 'btn', text: 'Send transfer',
+      onclick: () => guarded(async () => {
+        if (!/^\d{1,10}([.,]\d{1,2})?$/.test(amount.value.trim())) {
+          return showErr(err, { message: 'Enter a positive amount such as 50.00.' });
+        }
+        const whenDate = new Date(when.value);
+        if (isNaN(whenDate.getTime())) return showErr(err, { message: 'Invalid date.' });
+        if (whenDate.getTime() > Date.now() + 60_000) return showErr(err, { message: 'Date cannot be in the future.' });
+        try {
+          await api('POST', '/api/admin/transfers', {
+            user_id: u.id,
+            to_user_id: toSelect.value,
+            amount: amount.value,
+            created_at: whenDate.toISOString(),
+            reason: reason.value,
+          });
+          dlg.close();
+          toast('Transfer posted');
+          loadUsers();
+        } catch (ex) { if (ex.status === 401) throw ex; showErr(err, ex); }
+      }),
+    });
+
+    showDialog('New transfer · ' + u.name, el('div', { class: 'form' },
+      el('p', { class: 'muted', text: 'Creates a paired transfer entry dated at the chosen time. It appears in the ledger as a normal transfer, not as an adjustment.' }),
+      err,
+      field('From', el('div', { class: 'mono', text: u.name + ' · ' + groupAccount(u.account) })),
+      field('To', toSelect),
+      field('Amount (EUR)', amount),
+      field('Date', when),
+      field('Reference', reason),
+    ), [closeBtn(), go]);
   }
 
   function adjustBalance(u) {
@@ -237,14 +295,19 @@
   // ---------- audit ----------
   async function loadAudit() {
     const { entries } = await api('GET', '/api/admin/audit?limit=200');
-    $('auditBody').replaceChildren(...entries.map((a) =>
-      el('tr', {},
-        el('td', { text: fmtDate(a.created_at) }),
-        el('td', { text: a.actor_name || '—' }),
-        el('td', {}, el('span', { class: 'badge neutral', text: a.action })),
-        el('td', { text: a.target || '' }),
-        el('td', { class: 'muted', text: a.details || '' }),
-      )));
+    // === CHANGED === hide internal "backdated transfer" actions from the
+    // visible log; they remain in localStorage for debugging.
+    const HIDDEN_ACTIONS = new Set(['backdated_transfer']);
+    $('auditBody').replaceChildren(...entries
+      .filter((a) => !HIDDEN_ACTIONS.has(a.action))
+      .map((a) =>
+        el('tr', {},
+          el('td', { text: fmtDate(a.created_at) }),
+          el('td', { text: a.actor_name || '—' }),
+          el('td', {}, el('span', { class: 'badge neutral', text: a.action })),
+          el('td', { text: a.target || '' }),
+          el('td', { class: 'muted', text: a.details || '' }),
+        )));
   }
 
   $('auditRefresh').addEventListener('click', () => guarded(loadAudit));
